@@ -35,9 +35,9 @@ class MotorDriverNode(Node):
         # 0   O| |O   1
         # 2   O| |O   3
         # 
-        vx = msg.Linear.x
-        vy = msg.Linear.y
-        wz = msg.Angular.z
+        vx = msg.linear.x
+        vy = msg.linear.y
+        wz = msg.angular.z
         lpw = self.L_W * wz
         rpm_factor = self.rpm_factor
         
