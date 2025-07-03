@@ -7,7 +7,6 @@ from geometry_msgs.msg import Twist
 import serial
 import time
 import math
-import numpy as np
 
 
 class MotorDriverNode(Node):
@@ -21,26 +20,42 @@ class MotorDriverNode(Node):
         time.sleep(2)  # Wait for ESP32 to reset
 
         # wheel stuff
-        rpm_factor = 60 / (math.pi * 0.06) # wheel diameter 0.06m
+        self.rpm_factor = 60 / (math.pi * 0.06) # wheel diameter 0.06m
+        self.L = 20 #distance from center to wheel in X (half robot width)
+        self.W = 20 #distance from center to wheel in Y (half robot length)
+        self.L_W = self.L + self.W
 
 
-
-        # Set up a timer or subscriber to handle motor speed commands
-        # self.timer = self.create_timer(1.0, self.timer_callback)
 
 
 
     def cmd_vel_callback(self, msg):
         # motor order, direction 
         #       ^
-        # 0   O| |O   3
-        # 1   O| |O   2
+        # 0   O| |O   1
+        # 2   O| |O   3
         # 
+        vx = msg.Linear.x
+        vy = msg.Linear.y
+        wz = msg.Angular.z
+        lpw = self.L_W * wz
+        rpm_factor = self.rpm_factor
+        
+        rpms = [(vx - vy - lpw) * rpm_factor,
+            (vx + vy + lpw) * rpm_factor,
+            (vx + vy - lpw) * rpm_factor,
+            (vx - vy + lpw) * rpm_factor]
+    
+        self.ser.write(f"{rpms[0]} {rpms[1]} {rpms[2]} {rpms[3]}\n".encode())
 
-        twist_vec = np.array([msg.linear.x, msg.linear.y, msg.angular.z]) # the car cannot fly yet
-        rpm_vec = twist_vec * self.rpm_factor
 
 
+    # cmd = f"{int(w0)} {int(w1)} {int(w2)} {int(w3)}\n"
+    # try:
+    #     self.ser.write(cmd.encode())
+    #     self.get_logger().info(f"Sent to ESP32: {cmd.strip()}")
+    # except Exception as e:
+    #     self.get_logger().error(f"Serial write failed: {e}")
 
 
 
